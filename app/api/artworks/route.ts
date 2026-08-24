@@ -69,6 +69,11 @@ export async function GET() {
         const bi = orderMap.has(b.url) ? orderMap.get(b.url)! : Infinity;
         return ai - bi;
       });
+      // Rename titles to their position number (1, 2, 3…)
+      let pos = 1;
+      for (const artwork of artworks) {
+        if (orderMap.has(artwork.url)) artwork.title = String(pos++);
+      }
     } else {
       artworks.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
     }
