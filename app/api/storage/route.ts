@@ -21,7 +21,7 @@ export async function GET() {
     return NextResponse.json({
       totalBytes,
       totalMB: totalBytes / (1024 * 1024),
-      limitMB: 500,
+      limitMB: 5000,
       count,
     });
   } catch {

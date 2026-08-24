@@ -18,7 +18,7 @@ export async function POST(request: NextRequest): Promise<Response> {
           'image/tiff',
           'image/heic',
         ],
-        maximumSizeInBytes: 50 * 1024 * 1024, // 50 MB
+        maximumSizeInBytes: 150 * 1024 * 1024, // 150 MB
       }),
       onUploadCompleted: async () => {},
     });
