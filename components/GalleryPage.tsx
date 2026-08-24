@@ -6,7 +6,7 @@ import ArtworkCard from './ArtworkCard';
 import FullscreenModal from './FullscreenModal';
 import { useSavedArtworks } from '@/lib/useSavedArtworks';
 
-type SortDir = 'asc' | 'desc';
+type SortDir = 'none' | 'asc' | 'desc';
 
 interface Artwork {
   id: string;
@@ -24,7 +24,7 @@ export default function GalleryPage() {
   const [history, setHistory] = useState<number[]>([]);
   const [future, setFuture] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [sortDir, setSortDir] = useState<SortDir>('none');
   const [ready, setReady] = useState(false);
   const [overlayMounted, setOverlayMounted] = useState(true);
   const [showSaved, setShowSaved] = useState(false);
@@ -70,11 +70,11 @@ export default function GalleryPage() {
 
   const sorted = [...artworks]
     .filter((a) => !showSaved || savedIds.has(a.id))
-    .sort((a, b) =>
-      sortDir === 'asc'
-        ? a.title.localeCompare(b.title, undefined, { sensitivity: 'base', numeric: true })
-        : b.title.localeCompare(a.title, undefined, { sensitivity: 'base', numeric: true })
-    );
+    .sort((a, b) => {
+      if (sortDir === 'asc') return a.title.localeCompare(b.title, undefined, { sensitivity: 'base', numeric: true });
+      if (sortDir === 'desc') return b.title.localeCompare(a.title, undefined, { sensitivity: 'base', numeric: true });
+      return 0; // 'none' — preserve API order
+    });
 
   function openAt(index: number) {
     setHistory([]);
@@ -164,10 +164,10 @@ export default function GalleryPage() {
             Random
           </button>
           <button
-            onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+            onClick={() => setSortDir((d) => d === 'none' ? 'asc' : d === 'asc' ? 'desc' : 'none')}
             className={btnClass}
           >
-            {sortDir === 'asc' ? 'A → Z' : 'Z → A'}
+            {sortDir === 'asc' ? 'A → Z' : sortDir === 'desc' ? 'Z → A' : 'Sort'}
           </button>
           <button
             onClick={() => { setShowSaved((s) => !s); setSelectedIndex(null); setHistory([]); setFuture([]); }}

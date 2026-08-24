@@ -92,7 +92,25 @@ export default function AdminPanel() {
   const [reservations, setReservations] = useState<Record<string, string>>({});
   const [reserveEditing, setReserveEditing] = useState<string | null>(null);
   const [reserveDraft, setReserveDraft] = useState('');
+  const [localOrder, setLocalOrder] = useState<string[]>([]);
+  const [savedOrder, setSavedOrder] = useState<string[] | null>(null);
+  const [orderLoaded, setOrderLoaded] = useState(false);
+  const [hasUnsavedOrder, setHasUnsavedOrder] = useState(false);
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const dragOverIdx = useRef<number | null>(null);
   const addMoreRef = useRef<HTMLInputElement>(null);
+
+  async function loadOrder() {
+    try {
+      const res = await fetch('/api/order');
+      if (res.ok) {
+        const data = await res.json();
+        setSavedOrder(Array.isArray(data) ? data : null);
+      }
+    } catch {}
+    setOrderLoaded(true);
+  }
 
   async function loadReservations() {
     try {
@@ -138,7 +156,23 @@ export default function AdminPanel() {
     loadArtworks();
     loadStorage();
     loadReservations();
+    loadOrder();
   }, []);
+
+  // Sync localOrder whenever artworks or savedOrder change
+  useEffect(() => {
+    if (!orderLoaded) return;
+    if (artworks.length === 0) { setLocalOrder([]); return; }
+    if (savedOrder && savedOrder.length > 0) {
+      const present = savedOrder.filter((url) => artworks.some((a) => a.url === url));
+      const newOnes = artworks.filter((a) => !savedOrder.includes(a.url)).map((a) => a.url);
+      setLocalOrder([...present, ...newOnes]);
+    } else {
+      setLocalOrder(artworks.map((a) => a.url));
+    }
+    setHasUnsavedOrder(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [artworks, savedOrder, orderLoaded]);
 
   function addFiles(files: FileList) {
     const newItems: PendingItem[] = Array.from(files).map((file, i) => ({
@@ -284,6 +318,49 @@ export default function AdminPanel() {
     setSelectedIds(new Set());
     await loadArtworks();
     await loadStorage();
+  }
+
+  function onDragStart(idx: number) {
+    setDragIdx(idx);
+    dragOverIdx.current = idx;
+  }
+
+  function onDragOver(e: React.DragEvent, idx: number) {
+    e.preventDefault();
+    if (dragIdx === null || dragOverIdx.current === idx) return;
+    dragOverIdx.current = idx;
+    setLocalOrder((prev) => {
+      const next = [...prev];
+      const [item] = next.splice(dragIdx, 1);
+      next.splice(idx, 0, item);
+      return next;
+    });
+    setDragIdx(idx);
+    setHasUnsavedOrder(true);
+  }
+
+  function onDragEnd() {
+    setDragIdx(null);
+    dragOverIdx.current = null;
+  }
+
+  async function saveOrder() {
+    setIsSavingOrder(true);
+    await fetch('/api/order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(localOrder),
+    });
+    setSavedOrder([...localOrder]);
+    setHasUnsavedOrder(false);
+    setIsSavingOrder(false);
+  }
+
+  async function resetOrder() {
+    await fetch('/api/order', { method: 'DELETE' });
+    setSavedOrder(null);
+    setLocalOrder(artworks.map((a) => a.url));
+    setHasUnsavedOrder(false);
   }
 
   const pendingCount = pendingItems.filter((i) => i.status === 'pending').length;
@@ -433,7 +510,7 @@ export default function AdminPanel() {
             Gallery{!loading && ` — ${artworks.length} ${artworks.length === 1 ? 'work' : 'works'}`}
           </h2>
           {!loading && artworks.length > 0 && (
-            <div className="flex items-center gap-4 text-xs tracking-widest uppercase">
+            <div className="flex items-center gap-4 text-xs tracking-widest uppercase flex-wrap">
               {selectedIds.size > 0 ? (
                 <>
                   <span className="text-zinc-500">{selectedIds.size} selected</span>
@@ -450,6 +527,20 @@ export default function AdminPanel() {
                 </>
               ) : (
                 <>
+                  {hasUnsavedOrder && (
+                    <button
+                      onClick={saveOrder}
+                      disabled={isSavingOrder}
+                      className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors disabled:opacity-40"
+                    >
+                      {isSavingOrder ? 'Saving…' : 'Save Order'}
+                    </button>
+                  )}
+                  {savedOrder && (
+                    <button onClick={resetOrder} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
+                      Reset Order
+                    </button>
+                  )}
                   <button onClick={selectAll} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
                     Select All
                   </button>
@@ -466,112 +557,130 @@ export default function AdminPanel() {
           )}
         </div>
 
+        {!loading && artworks.length > 0 && !hasUnsavedOrder && (
+          <p className="text-[11px] text-zinc-400 dark:text-zinc-600 tracking-wide">
+            Drag artworks to reorder — click <strong>Save Order</strong> to apply to the gallery.
+          </p>
+        )}
+
         {loading ? (
           <p className="text-zinc-400 dark:text-zinc-600 text-xs tracking-widest uppercase">Loading…</p>
         ) : artworks.length === 0 ? (
           <p className="text-zinc-500 dark:text-zinc-700 text-xs">No artworks yet.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {artworks.map((artwork) => (
-              <div key={artwork.id} className="space-y-2">
+            {localOrder.map((url, idx) => {
+              const artwork = artworks.find((a) => a.url === url);
+              if (!artwork) return null;
+              return (
                 <div
-                  className="relative aspect-video bg-zinc-100 dark:bg-zinc-900 overflow-hidden group cursor-pointer"
-                  onClick={() => selectedIds.size > 0 ? toggleSelect(artwork.id) : undefined}
+                  key={artwork.id}
+                  draggable={selectedIds.size === 0}
+                  onDragStart={() => onDragStart(idx)}
+                  onDragOver={(e) => onDragOver(e, idx)}
+                  onDragEnd={onDragEnd}
+                  className={`space-y-2 transition-opacity ${dragIdx === idx ? 'opacity-40' : 'opacity-100'} ${selectedIds.size === 0 ? 'cursor-grab active:cursor-grabbing' : ''}`}
                 >
-                  {artwork.url.split('?')[0].toLowerCase().endsWith('.gif') ? (
-                    <StaticGif src={artwork.url} alt={artwork.title} />
-                  ) : (
-                    <img
-                      src={artwork.url}
-                      alt={artwork.title}
-                      loading="lazy"
-                      className="w-full h-full object-cover"
-                    />
-                  )}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); toggleSelect(artwork.id); }}
-                    className={`absolute top-2 left-2 w-5 h-5 border-2 flex items-center justify-center transition-all z-10 ${
-                      selectedIds.has(artwork.id)
-                        ? 'bg-white border-white opacity-100'
-                        : 'bg-black/40 border-zinc-300 opacity-0 group-hover:opacity-100'
-                    }`}
-                    aria-label={selectedIds.has(artwork.id) ? 'Deselect' : 'Select'}
+                  <div
+                    className="relative aspect-video bg-zinc-100 dark:bg-zinc-900 overflow-hidden group"
+                    onClick={() => selectedIds.size > 0 ? toggleSelect(artwork.id) : undefined}
+                    style={{ cursor: selectedIds.size > 0 ? 'pointer' : 'inherit' }}
                   >
-                    {selectedIds.has(artwork.id) && (
-                      <span className="text-black text-[10px] font-bold leading-none">✓</span>
+                    {artwork.url.split('?')[0].toLowerCase().endsWith('.gif') ? (
+                      <StaticGif src={artwork.url} alt={artwork.title} />
+                    ) : (
+                      <img
+                        src={artwork.url}
+                        alt={artwork.title}
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                      />
                     )}
-                  </button>
-                  {selectedIds.size === 0 && (
                     <button
-                      onClick={() => handleDelete(artwork)}
-                      className="absolute inset-0 bg-black/70 text-red-400 text-xs tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                      onClick={(e) => { e.stopPropagation(); toggleSelect(artwork.id); }}
+                      className={`absolute top-2 left-2 w-5 h-5 border-2 flex items-center justify-center transition-all z-10 ${
+                        selectedIds.has(artwork.id)
+                          ? 'bg-white border-white opacity-100'
+                          : 'bg-black/40 border-zinc-300 opacity-0 group-hover:opacity-100'
+                      }`}
+                      aria-label={selectedIds.has(artwork.id) ? 'Deselect' : 'Select'}
                     >
-                      Remove
+                      {selectedIds.has(artwork.id) && (
+                        <span className="text-black text-[10px] font-bold leading-none">✓</span>
+                      )}
+                    </button>
+                    {selectedIds.size === 0 && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(artwork); }}
+                        className="absolute inset-0 bg-black/70 text-red-400 text-xs tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-zinc-600 dark:text-zinc-500 text-xs truncate">{artwork.title}</p>
+
+                  {/* Reservation controls */}
+                  {reserveEditing === artwork.url ? (
+                    <div className="space-y-1.5">
+                      <input
+                        autoFocus
+                        type="text"
+                        value={reserveDraft}
+                        onChange={(e) => setReserveDraft(e.target.value)}
+                        placeholder="Reserved by…"
+                        className={inputClass}
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={async () => {
+                            if (reserveDraft.trim()) await saveReservation(artwork.url, reserveDraft.trim());
+                            setReserveEditing(null);
+                            setReserveDraft('');
+                          }}
+                          className="text-[10px] tracking-widest uppercase text-zinc-900 dark:text-zinc-100 border border-zinc-400 dark:border-zinc-600 px-3 py-1 hover:border-zinc-700 dark:hover:border-zinc-400 transition-colors"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => { setReserveEditing(null); setReserveDraft(''); }}
+                          className="text-[10px] tracking-widest uppercase text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : reservations[artwork.url] ? (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] text-amber-600 dark:text-amber-400 tracking-widest uppercase truncate">
+                        Reserved — {reservations[artwork.url]}
+                      </span>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => { setReserveEditing(artwork.url); setReserveDraft(reservations[artwork.url]); }}
+                          className="text-[10px] tracking-widest uppercase text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => saveReservation(artwork.url, null)}
+                          className="text-[10px] tracking-widest uppercase text-red-400 hover:text-red-600 transition-colors"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => { setReserveEditing(artwork.url); setReserveDraft(''); }}
+                      className="text-[10px] tracking-widest uppercase text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+                    >
+                      + Reserve
                     </button>
                   )}
                 </div>
-                <p className="text-zinc-600 dark:text-zinc-500 text-xs truncate">{artwork.title}</p>
-
-                {/* Reservation controls */}
-                {reserveEditing === artwork.url ? (
-                  <div className="space-y-1.5">
-                    <input
-                      autoFocus
-                      type="text"
-                      value={reserveDraft}
-                      onChange={(e) => setReserveDraft(e.target.value)}
-                      placeholder="Reserved by…"
-                      className={inputClass}
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={async () => {
-                          if (reserveDraft.trim()) await saveReservation(artwork.url, reserveDraft.trim());
-                          setReserveEditing(null);
-                          setReserveDraft('');
-                        }}
-                        className="text-[10px] tracking-widest uppercase text-zinc-900 dark:text-zinc-100 border border-zinc-400 dark:border-zinc-600 px-3 py-1 hover:border-zinc-700 dark:hover:border-zinc-400 transition-colors"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => { setReserveEditing(null); setReserveDraft(''); }}
-                        className="text-[10px] tracking-widest uppercase text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : reservations[artwork.url] ? (
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] text-amber-600 dark:text-amber-400 tracking-widest uppercase truncate">
-                      Reserved — {reservations[artwork.url]}
-                    </span>
-                    <div className="flex gap-2 shrink-0">
-                      <button
-                        onClick={() => { setReserveEditing(artwork.url); setReserveDraft(reservations[artwork.url]); }}
-                        className="text-[10px] tracking-widest uppercase text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => saveReservation(artwork.url, null)}
-                        className="text-[10px] tracking-widest uppercase text-red-400 hover:text-red-600 transition-colors"
-                      >
-                        Clear
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => { setReserveEditing(artwork.url); setReserveDraft(''); }}
-                    className="text-[10px] tracking-widest uppercase text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
-                  >
-                    + Reserve
-                  </button>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
