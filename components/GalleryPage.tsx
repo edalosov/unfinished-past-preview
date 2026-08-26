@@ -129,7 +129,7 @@ export default function GalleryPage() {
             @keyframes loadbar { from { transform: scaleX(0); } to { transform: scaleX(0.88); } }
           `}</style>
           <p className="text-sm text-zinc-600 dark:text-zinc-400 tracking-wide">
-            <em>In Time</em> by Dalos Dov (Preview)
+            Unfinished Past
           </p>
           <p className="mt-3 text-[10px] text-zinc-400 dark:text-zinc-600 tracking-[0.35em] uppercase">
             Loading artworks…
@@ -147,7 +147,7 @@ export default function GalleryPage() {
         <ThemeToggle />
 
         <h1 className="text-sm text-zinc-600 dark:text-zinc-400 tracking-wide">
-          <em>In Time</em> by Dalos Dov (Preview)
+          Unfinished Past
         </h1>
 
         <div className="flex items-center gap-2">

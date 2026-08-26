@@ -10,8 +10,8 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: 'In Time by Dalos Dov (Preview)',
-  description: 'Art Collection',
+  title: 'Unfinished Past',
+  description: 'Art Collection by Dalos Dov',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
