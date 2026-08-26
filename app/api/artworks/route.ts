@@ -81,7 +81,7 @@ export async function GET() {
     }
 
     return NextResponse.json(artworks, {
-      headers: { 'Cache-Control': 'no-store, no-cache' },
+      headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=300' },
     });
   } catch {
     return NextResponse.json({ error: 'Failed to load artworks' }, { status: 500 });

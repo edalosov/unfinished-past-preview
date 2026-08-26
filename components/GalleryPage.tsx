@@ -54,8 +54,8 @@ export default function GalleryPage() {
             })
         );
 
-        const minWait = new Promise<void>((resolve) => setTimeout(resolve, 4000));
-        const maxWait = new Promise<void>((resolve) => setTimeout(resolve, 6000));
+        const minWait = new Promise<void>((resolve) => setTimeout(resolve, 2000));
+        const maxWait = new Promise<void>((resolve) => setTimeout(resolve, 5000));
         Promise.all([Promise.race([Promise.all(preloads), maxWait]), minWait]).then(() => setReady(true));
       })
       .catch(() => {
