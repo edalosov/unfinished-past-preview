@@ -27,7 +27,7 @@ interface PendingItem {
   errorMsg?: string;
 }
 
-async function createThumbnail(file: File): Promise<Blob | null> {
+async function createThumbnail(file: Blob): Promise<Blob | null> {
   if (file.type === 'image/gif') return null;
   return new Promise((resolve) => {
     const objectUrl = URL.createObjectURL(file);
@@ -112,6 +112,8 @@ export default function AdminPanel() {
   const [uploadedCount, setUploadedCount] = useState(0);
   const [storage, setStorage] = useState<StorageInfo | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isGeneratingThumbs, setIsGeneratingThumbs] = useState(false);
+  const [thumbProgress, setThumbProgress] = useState({ done: 0, total: 0 });
   const [isDeleting, setIsDeleting] = useState(false);
   const [reservations, setReservations] = useState<Record<string, string>>({});
   const [reserveEditing, setReserveEditing] = useState<string | null>(null);
@@ -397,6 +399,36 @@ export default function AdminPanel() {
     setHasUnsavedOrder(false);
   }
 
+  async function generateThumbnails() {
+    const missing = artworks.filter(
+      (a) => a.thumbnailUrl === a.url && !a.url.split('?')[0].toLowerCase().endsWith('.gif')
+    );
+    if (!missing.length) return;
+    setIsGeneratingThumbs(true);
+    setThumbProgress({ done: 0, total: missing.length });
+
+    for (let i = 0; i < missing.length; i++) {
+      const artwork = missing[i];
+      try {
+        const res = await fetch(artwork.url, { mode: 'cors' });
+        const blob = await res.blob();
+        const thumbBlob = await createThumbnail(blob);
+        if (thumbBlob) {
+          const pathname = new URL(artwork.url).pathname.replace(/^\//, '');
+          const base = pathname.replace(/\.[^.]+$/, '');
+          await upload(`thumb__${base}.jpg`, thumbBlob, {
+            access: 'public',
+            handleUploadUrl: '/api/upload',
+          });
+        }
+      } catch {}
+      setThumbProgress({ done: i + 1, total: missing.length });
+    }
+
+    setIsGeneratingThumbs(false);
+    await loadArtworks();
+  }
+
   const pendingCount = pendingItems.filter((i) => i.status === 'pending').length;
   const totalQueued = pendingItems.filter((i) => i.status !== 'error').length;
 
@@ -573,6 +605,17 @@ export default function AdminPanel() {
                   {savedOrder && (
                     <button onClick={resetOrder} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
                       Reset Order
+                    </button>
+                  )}
+                  {artworks.some((a) => a.thumbnailUrl === a.url && !a.url.split('?')[0].toLowerCase().endsWith('.gif')) && (
+                    <button
+                      onClick={generateThumbnails}
+                      disabled={isGeneratingThumbs}
+                      className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors disabled:opacity-40"
+                    >
+                      {isGeneratingThumbs
+                        ? `Generating thumbnails ${thumbProgress.done}/${thumbProgress.total}…`
+                        : 'Generate Thumbnails'}
                     </button>
                   )}
                   <button onClick={selectAll} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
