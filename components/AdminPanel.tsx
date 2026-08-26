@@ -163,7 +163,7 @@ export default function AdminPanel() {
 
   async function loadArtworks() {
     try {
-      const res = await fetch('/api/artworks');
+      const res = await fetch('/api/artworks', { cache: 'no-store' });
       const data = await res.json();
       if (Array.isArray(data)) setArtworks(data);
     } finally {
@@ -401,7 +401,7 @@ export default function AdminPanel() {
 
   async function generateThumbnails() {
     const missing = artworks.filter(
-      (a) => a.thumbnailUrl === a.url && !a.url.split('?')[0].toLowerCase().endsWith('.gif')
+      (a) => (!a.thumbnailUrl || a.thumbnailUrl === a.url) && !a.url.split('?')[0].toLowerCase().endsWith('.gif')
     );
     if (!missing.length) return;
     setIsGeneratingThumbs(true);
@@ -607,7 +607,7 @@ export default function AdminPanel() {
                       Reset Order
                     </button>
                   )}
-                  {artworks.some((a) => a.thumbnailUrl === a.url && !a.url.split('?')[0].toLowerCase().endsWith('.gif')) && (
+                  {artworks.some((a) => (!a.thumbnailUrl || a.thumbnailUrl === a.url) && !a.url.split('?')[0].toLowerCase().endsWith('.gif')) && (
                     <button
                       onClick={generateThumbnails}
                       disabled={isGeneratingThumbs}
