@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
 interface Props {
@@ -154,12 +153,12 @@ export default function ArtworkCard({ artwork, onClick, isSaved, onToggleSave, i
       className="relative overflow-hidden cursor-pointer group aspect-video bg-zinc-100 dark:bg-zinc-900"
       onClick={onClick}
     >
-      <Image
+      <img
         src={artwork.url}
         alt={artwork.title}
-        fill
-        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-        className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+        loading="lazy"
+        decoding="async"
+        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
       />
       {isReserved && <ReservedOverlay />}
       <HeartButton isSaved={isSaved} onToggleSave={onToggleSave} />
