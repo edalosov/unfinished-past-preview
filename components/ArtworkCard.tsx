@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 interface Props {
-  artwork: { id: string; url: string; title: string };
+  artwork: { id: string; url: string; thumbnailUrl: string; title: string };
   onClick: () => void;
   isSaved: boolean;
   onToggleSave: () => void;
@@ -154,7 +154,7 @@ export default function ArtworkCard({ artwork, onClick, isSaved, onToggleSave, i
       onClick={onClick}
     >
       <img
-        src={artwork.url}
+        src={artwork.thumbnailUrl}
         alt={artwork.title}
         loading="lazy"
         decoding="async"

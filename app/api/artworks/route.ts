@@ -8,6 +8,7 @@ export interface Artwork {
   id: string;
   title: string;
   originalTitle: string;
+  thumbnailUrl: string;
   url: string;
   uploadedAt: string;
   reservedBy: string | null;
@@ -45,9 +46,18 @@ export async function GET() {
   try {
     const [{ blobs }, reservations, order] = await Promise.all([list(), getReservations(), getOrder()]);
 
-    const artworks: Artwork[] = blobs
-      .filter((blob) => !blob.pathname.startsWith('__'))
-      .map((blob) => {
+    const nonSystemBlobs = blobs.filter((b) => !b.pathname.startsWith('__'));
+    const thumbnailBlobs = nonSystemBlobs.filter((b) => b.pathname.startsWith('thumb__'));
+    const originalBlobs = nonSystemBlobs.filter((b) => !b.pathname.startsWith('thumb__'));
+
+    // Build map: base name without extension → thumbnail URL
+    const thumbMap = new Map<string, string>();
+    for (const t of thumbnailBlobs) {
+      const base = t.pathname.slice('thumb__'.length).replace(/\.[^.]+$/, '');
+      thumbMap.set(base, t.url);
+    }
+
+    const artworks: Artwork[] = originalBlobs.map((blob) => {
         const nameWithoutExt = blob.pathname.replace(/\.[^.]+$/, '');
         const separatorIndex = nameWithoutExt.indexOf('__');
         const slug =
@@ -58,6 +68,7 @@ export async function GET() {
           id: blob.url,
           title,
           originalTitle: title,
+          thumbnailUrl: thumbMap.get(nameWithoutExt) ?? blob.url,
           url: blob.url,
           uploadedAt: blob.uploadedAt.toISOString(),
           reservedBy: reservations[blob.url] ?? null,

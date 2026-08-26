@@ -8,6 +8,7 @@ interface Artwork {
   id: string;
   title: string;
   originalTitle: string;
+  thumbnailUrl: string;
   url: string;
 }
 
@@ -24,6 +25,28 @@ interface PendingItem {
   title: string;
   status: 'pending' | 'uploading' | 'done' | 'error';
   errorMsg?: string;
+}
+
+async function createThumbnail(file: File): Promise<Blob | null> {
+  if (file.type === 'image/gif') return null;
+  return new Promise((resolve) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new window.Image();
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const MAX = 1200;
+      const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { resolve(null); return; }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.7);
+    };
+    img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(null); };
+    img.src = objectUrl;
+  });
 }
 
 function filenameToTitle(filename: string): string {
@@ -226,7 +249,17 @@ export default function AdminPanel() {
       try {
         const ext = item.file.name.split('.').pop()?.toLowerCase() || 'jpg';
         const slug = titleToSlug(item.title.trim() || 'untitled') || 'untitled';
-        const filename = `${Date.now()}__${slug}.${ext}`;
+        const ts = Date.now();
+        const filename = `${ts}__${slug}.${ext}`;
+
+        // Generate and upload compressed thumbnail (non-GIF only)
+        const thumbBlob = await createThumbnail(item.file);
+        if (thumbBlob) {
+          await upload(`thumb__${ts}__${slug}.jpg`, thumbBlob, {
+            access: 'public',
+            handleUploadUrl: '/api/upload',
+          });
+        }
 
         await upload(filename, item.file, {
           access: 'public',
@@ -265,7 +298,7 @@ export default function AdminPanel() {
     const res = await fetch('/api/delete', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: artwork.url }),
+      body: JSON.stringify({ url: artwork.url, thumbnailUrl: artwork.thumbnailUrl }),
     });
 
     if (res.ok) {
@@ -295,7 +328,7 @@ export default function AdminPanel() {
       await fetch('/api/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: artwork.url }),
+        body: JSON.stringify({ url: artwork.url, thumbnailUrl: artwork.thumbnailUrl }),
       });
     }
     setIsDeleting(false);
@@ -312,7 +345,7 @@ export default function AdminPanel() {
       await fetch('/api/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: artwork.url }),
+        body: JSON.stringify({ url: artwork.url, thumbnailUrl: artwork.thumbnailUrl }),
       });
     }
     setIsDeleting(false);

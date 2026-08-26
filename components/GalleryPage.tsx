@@ -9,6 +9,7 @@ import { useSavedArtworks } from '@/lib/useSavedArtworks';
 interface Artwork {
   id: string;
   title: string;
+  thumbnailUrl: string;
   url: string;
   reservedBy: string | null;
 }
