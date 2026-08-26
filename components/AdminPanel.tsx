@@ -7,6 +7,7 @@ import { titleToSlug } from '@/lib/utils';
 interface Artwork {
   id: string;
   title: string;
+  originalTitle: string;
   url: string;
 }
 
@@ -618,7 +619,11 @@ export default function AdminPanel() {
                       </button>
                     )}
                   </div>
-                  <p className="text-zinc-600 dark:text-zinc-500 text-xs truncate">{artwork.title}</p>
+                  <p className="text-zinc-600 dark:text-zinc-500 text-xs truncate">
+                    {artwork.title !== artwork.originalTitle
+                      ? <><span className="text-zinc-900 dark:text-zinc-100 font-medium">{artwork.title}</span> — {artwork.originalTitle}</>
+                      : artwork.title}
+                  </p>
 
                   {/* Reservation controls */}
                   {reserveEditing === artwork.url ? (

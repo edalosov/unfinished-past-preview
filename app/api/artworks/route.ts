@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 export interface Artwork {
   id: string;
   title: string;
+  originalTitle: string;
   url: string;
   uploadedAt: string;
   reservedBy: string | null;
@@ -56,6 +57,7 @@ export async function GET() {
         return {
           id: blob.url,
           title,
+          originalTitle: title,
           url: blob.url,
           uploadedAt: blob.uploadedAt.toISOString(),
           reservedBy: reservations[blob.url] ?? null,
