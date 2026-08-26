@@ -163,7 +163,7 @@ export default function AdminPanel() {
 
   async function loadArtworks() {
     try {
-      const res = await fetch('/api/artworks', { cache: 'no-store' });
+      const res = await fetch(`/api/artworks?t=${Date.now()}`, { cache: 'no-store' });
       const data = await res.json();
       if (Array.isArray(data)) setArtworks(data);
     } finally {
