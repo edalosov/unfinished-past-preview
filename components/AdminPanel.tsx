@@ -607,22 +607,17 @@ export default function AdminPanel() {
                       Reset Order
                     </button>
                   )}
-                  {(() => {
-                    const needsThumb = artworks.filter(
-                      (a) => (!a.thumbnailUrl || a.thumbnailUrl === a.url) && !a.url.split('?')[0].toLowerCase().endsWith('.gif')
-                    ).length;
-                    return (
-                      <button
-                        onClick={generateThumbnails}
-                        disabled={isGeneratingThumbs || needsThumb === 0}
-                        className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors disabled:opacity-40"
-                      >
-                        {isGeneratingThumbs
-                          ? `Generating thumbnails ${thumbProgress.done}/${thumbProgress.total}…`
-                          : `Generate Thumbnails (${needsThumb})`}
-                      </button>
-                    );
-                  })()}
+                  {artworks.some((a) => (!a.thumbnailUrl || a.thumbnailUrl === a.url) && !a.url.split('?')[0].toLowerCase().endsWith('.gif')) && (
+                    <button
+                      onClick={generateThumbnails}
+                      disabled={isGeneratingThumbs}
+                      className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors disabled:opacity-40"
+                    >
+                      {isGeneratingThumbs
+                        ? `Generating thumbnails ${thumbProgress.done}/${thumbProgress.total}…`
+                        : 'Generate Thumbnails'}
+                    </button>
+                  )}
                   <button onClick={selectAll} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
                     Select All
                   </button>
