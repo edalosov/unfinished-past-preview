@@ -124,6 +124,7 @@ export default function AdminPanel() {
   const [hasUnsavedOrder, setHasUnsavedOrder] = useState(false);
   const [isSavingOrder, setIsSavingOrder] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const dragOverIdx = useRef<number | null>(null);
   const addMoreRef = useRef<HTMLInputElement>(null);
 
@@ -634,7 +635,28 @@ export default function AdminPanel() {
           )}
         </div>
 
-        {!loading && artworks.length > 0 && !hasUnsavedOrder && (
+        {!loading && artworks.length > 0 && (
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by title or filename…"
+              className={inputClass}
+              style={{ maxWidth: '320px' }}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors shrink-0"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        )}
+
+        {!loading && artworks.length > 0 && !hasUnsavedOrder && !searchQuery && (
           <p className="text-[11px] text-zinc-400 dark:text-zinc-600 tracking-wide">
             Drag artworks to reorder — click <strong>Save Order</strong> to apply to the gallery.
           </p>
@@ -648,6 +670,10 @@ export default function AdminPanel() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {localOrder.map((url, idx) => {
               const artwork = artworks.find((a) => a.url === url);
+              if (searchQuery) {
+                const q = searchQuery.toLowerCase();
+                if (!artwork?.title.toLowerCase().includes(q) && !artwork?.originalTitle.toLowerCase().includes(q)) return null;
+              }
               if (!artwork) return null;
               return (
                 <div
