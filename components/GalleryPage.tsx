@@ -147,7 +147,7 @@ export default function GalleryPage() {
       <header className="px-6 pt-10 pb-8 flex items-center justify-between">
         <ThemeToggle />
 
-        <h1 className="text-sm text-zinc-600 dark:text-zinc-400 tracking-wide">
+        <h1 className="text-3xl text-zinc-800 dark:text-zinc-200" style={{ fontFamily: 'var(--font-playfair), serif' }}>
           Unfinished Past
         </h1>
 
