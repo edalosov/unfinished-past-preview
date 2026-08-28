@@ -6,7 +6,7 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 
 const playfair = Playfair_Display({
   weight: ['400'],
-  style: ['normal'],
+  style: ['italic'],
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-playfair',
