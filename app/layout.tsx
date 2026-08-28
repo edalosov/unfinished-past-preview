@@ -1,16 +1,12 @@
 import type { Metadata } from 'next';
-import { Roboto, Playfair_Display } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
+import { Playfair_Display } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
-const roboto = Roboto({
-  weight: ['400', '500', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-});
-
 const playfair = Playfair_Display({
   weight: ['400'],
+  style: ['italic'],
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-playfair',
@@ -32,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body
-        className={`${roboto.className} ${playfair.variable} font-medium bg-[#FFFFFC] text-zinc-900 dark:bg-[#0a0a0a] dark:text-zinc-100 min-h-screen transition-colors duration-200`}
+        className={`${GeistSans.className} ${playfair.variable} bg-[#FFFFFC] text-zinc-900 dark:bg-[#0a0a0a] dark:text-zinc-100 min-h-screen transition-colors duration-200`}
       >
         <ThemeProvider>{children}</ThemeProvider>
       </body>
