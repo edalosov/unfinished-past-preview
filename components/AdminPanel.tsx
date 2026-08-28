@@ -125,8 +125,10 @@ export default function AdminPanel() {
   const [isSavingOrder, setIsSavingOrder] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [replacingUrl, setReplacingUrl] = useState<string | null>(null);
   const dragOverIdx = useRef<number | null>(null);
   const addMoreRef = useRef<HTMLInputElement>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
 
   async function loadOrder() {
     try {
@@ -311,6 +313,69 @@ export default function AdminPanel() {
     }
   }
 
+  function startReplace(url: string) {
+    setReplacingUrl(url);
+    replaceInputRef.current?.click();
+  }
+
+  async function handleReplaceFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !replacingUrl) { setReplacingUrl(null); return; }
+
+    const oldUrl = replacingUrl;
+    const oldArtwork = artworks.find((a) => a.url === oldUrl);
+    if (!oldArtwork) { setReplacingUrl(null); return; }
+
+    // Keep the same slug as the original so the title is preserved
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const slug = oldArtwork.originalTitle
+      .toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'untitled';
+    const ts = Date.now();
+    const filename = `${ts}__${slug}.${ext}`;
+
+    try {
+      // Upload thumbnail first (non-GIF only)
+      const thumbBlob = await createThumbnail(file);
+      if (thumbBlob) {
+        await upload(`thumb__${ts}__${slug}.jpg`, thumbBlob, {
+          access: 'public',
+          handleUploadUrl: '/api/upload',
+        });
+      }
+
+      // Upload new original
+      const result = await upload(filename, file, {
+        access: 'public',
+        handleUploadUrl: '/api/upload',
+      });
+      const newUrl = result.url;
+
+      // Swap URL in the current order and save it
+      const newOrder = localOrder.map((u) => (u === oldUrl ? newUrl : u));
+      await fetch('/api/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newOrder),
+      });
+
+      // Delete old file + thumbnail
+      await fetch('/api/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: oldUrl, thumbnailUrl: oldArtwork.thumbnailUrl }),
+      });
+
+      await loadArtworks();
+      await loadOrder();
+      await loadStorage();
+    } catch (err) {
+      alert(`Replace failed: ${err instanceof Error ? err.message : 'unknown error'}`);
+    }
+
+    setReplacingUrl(null);
+  }
+
   function toggleSelect(id: string) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -441,6 +506,14 @@ export default function AdminPanel() {
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-10 space-y-14">
+      {/* Hidden file input for artwork replacement */}
+      <input
+        ref={replaceInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleReplaceFile}
+      />
       {/* Storage bar */}
       <section className="space-y-2">
         <div className="flex justify-between items-baseline">
@@ -712,13 +785,27 @@ export default function AdminPanel() {
                         <span className="text-black text-[10px] font-bold leading-none">✓</span>
                       )}
                     </button>
-                    {selectedIds.size === 0 && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDelete(artwork); }}
-                        className="absolute inset-0 bg-black/70 text-red-400 text-xs tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                      >
-                        Remove
-                      </button>
+                    {replacingUrl === artwork.url && (
+                      <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                        <span className="text-white text-xs tracking-widest uppercase">Replacing…</span>
+                      </div>
+                    )}
+                    {selectedIds.size === 0 && replacingUrl !== artwork.url && (
+                      <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-5">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); startReplace(artwork.url); }}
+                          className="text-white text-xs tracking-widest uppercase hover:text-zinc-300 transition-colors"
+                        >
+                          Replace
+                        </button>
+                        <span className="text-zinc-500 text-xs">|</span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDelete(artwork); }}
+                          className="text-red-400 text-xs tracking-widest uppercase hover:text-red-300 transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     )}
                   </div>
                   <p className="text-zinc-600 dark:text-zinc-500 text-xs truncate">
