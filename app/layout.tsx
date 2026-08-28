@@ -28,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body
-        className={`${GeistSans.className} ${playfair.variable} bg-[#FFFFFC] text-zinc-900 dark:bg-[#0a0a0a] dark:text-zinc-100 min-h-screen transition-colors duration-200`}
+        className={`${GeistSans.className} ${playfair.variable} bg-[#FFFFFC] text-zinc-900 dark:bg-[#0a0a0a] dark:text-[#E4DFDA] min-h-screen transition-colors duration-200`}
       >
         <ThemeProvider>{children}</ThemeProvider>
       </body>

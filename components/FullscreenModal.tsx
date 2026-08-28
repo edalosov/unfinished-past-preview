@@ -96,7 +96,7 @@ export default function FullscreenModal({
           disabled={!canGoBack}
           className={`text-[10px] tracking-[0.2em] uppercase px-4 py-1.5 border transition-colors ${
             canGoBack
-              ? 'border-zinc-600 text-zinc-300 hover:border-white hover:text-white'
+              ? 'border-zinc-600 text-[#E4DFDA] hover:border-white hover:text-white'
               : 'border-zinc-800 text-zinc-700 cursor-not-allowed'
           }`}
           aria-label="Back to previous image"
@@ -108,7 +108,7 @@ export default function FullscreenModal({
           disabled={!canGoForward}
           className={`text-[10px] tracking-[0.2em] uppercase px-4 py-1.5 border transition-colors ${
             canGoForward
-              ? 'border-zinc-600 text-zinc-300 hover:border-white hover:text-white'
+              ? 'border-zinc-600 text-[#E4DFDA] hover:border-white hover:text-white'
               : 'border-zinc-800 text-zinc-700 cursor-not-allowed'
           }`}
           aria-label="Forward to next image"
@@ -117,7 +117,7 @@ export default function FullscreenModal({
         </button>
         <button
           onClick={onRandom}
-          className="text-[10px] tracking-[0.2em] uppercase px-4 py-1.5 border border-zinc-600 text-zinc-300 hover:border-white hover:text-white transition-colors"
+          className="text-[10px] tracking-[0.2em] uppercase px-4 py-1.5 border border-zinc-600 text-[#E4DFDA] hover:border-white hover:text-white transition-colors"
           aria-label="Random artwork"
         >
           Random
@@ -127,7 +127,7 @@ export default function FullscreenModal({
           className={`text-[10px] tracking-[0.2em] uppercase px-4 py-1.5 border transition-colors ${
             isSaved
               ? 'border-red-500 text-red-400 hover:border-red-300 hover:text-red-300'
-              : 'border-zinc-600 text-zinc-300 hover:border-white hover:text-white'
+              : 'border-zinc-600 text-[#E4DFDA] hover:border-white hover:text-white'
           }`}
           aria-label={isSaved ? 'Remove from saved' : 'Save'}
         >

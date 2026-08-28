@@ -102,7 +102,7 @@ function StaticGif({ src, alt }: { src: string; alt: string }) {
 }
 
 const inputClass =
-  'w-full bg-zinc-50 border border-zinc-200 text-zinc-900 placeholder-zinc-400 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-600 px-3 py-2 text-xs outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-colors disabled:opacity-50';
+  'w-full bg-zinc-50 border border-zinc-200 text-zinc-900 placeholder-zinc-400 dark:bg-zinc-900 dark:border-zinc-800 dark:text-[#E4DFDA] dark:placeholder-zinc-600 px-3 py-2 text-xs outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-colors disabled:opacity-50';
 
 export default function AdminPanel() {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
@@ -810,7 +810,7 @@ export default function AdminPanel() {
                   </div>
                   <p className="text-zinc-600 dark:text-zinc-500 text-xs truncate">
                     {artwork.title !== artwork.originalTitle
-                      ? <><span className="text-zinc-900 dark:text-zinc-100 font-medium">{artwork.title}</span> — {artwork.originalTitle}</>
+                      ? <><span className="text-zinc-900 dark:text-[#E4DFDA] font-medium">{artwork.title}</span> — {artwork.originalTitle}</>
                       : artwork.title}
                   </p>
 
@@ -832,7 +832,7 @@ export default function AdminPanel() {
                             setReserveEditing(null);
                             setReserveDraft('');
                           }}
-                          className="text-[10px] tracking-widest uppercase text-zinc-900 dark:text-zinc-100 border border-zinc-400 dark:border-zinc-600 px-3 py-1 hover:border-zinc-700 dark:hover:border-zinc-400 transition-colors"
+                          className="text-[10px] tracking-widest uppercase text-zinc-900 dark:text-[#E4DFDA] border border-zinc-400 dark:border-zinc-600 px-3 py-1 hover:border-zinc-700 dark:hover:border-zinc-400 transition-colors"
                         >
                           Save
                         </button>
