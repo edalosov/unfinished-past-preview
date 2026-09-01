@@ -144,14 +144,14 @@ export default function GalleryPage() {
         </div>
       )}
 
-      <header className="px-6 pt-10 pb-8 flex items-center justify-between">
+      <header className="px-6 pt-10 pb-8 grid grid-cols-3 items-center">
         <ThemeToggle />
 
-        <h1 className="text-4xl italic leading-none text-zinc-800 dark:text-[#E4DFDA]" style={{ fontFamily: 'var(--font-playfair), serif' }}>
+        <h1 className="text-4xl italic leading-none text-zinc-800 dark:text-[#E4DFDA] text-center" style={{ fontFamily: 'var(--font-playfair), serif' }}>
           Unfinished Past
         </h1>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 justify-end">
           <button onClick={showRandom} className={btnClass}>
             Random
           </button>
