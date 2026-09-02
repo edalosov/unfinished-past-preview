@@ -646,8 +646,13 @@ export default function AdminPanel() {
       {/* Gallery section */}
       <section className="space-y-5">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <h2 className="text-xs tracking-[0.3em] uppercase text-zinc-500">
-            Gallery{!loading && ` — ${artworks.length} ${artworks.length === 1 ? 'work' : 'works'}`}
+          <h2 className="text-xs tracking-[0.3em] uppercase text-zinc-500 flex items-center gap-3">
+            <span>Gallery{!loading && ` — ${artworks.length} ${artworks.length === 1 ? 'work' : 'works'}`}</span>
+            {!loading && Object.keys(reservations).length > 0 && (
+              <span className="text-amber-600 dark:text-amber-400">
+                {Object.keys(reservations).length} reserved
+              </span>
+            )}
           </h2>
           {!loading && artworks.length > 0 && (
             <div className="flex items-center gap-4 text-xs tracking-widest uppercase flex-wrap">
