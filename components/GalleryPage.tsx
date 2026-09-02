@@ -144,27 +144,47 @@ export default function GalleryPage() {
         </div>
       )}
 
-      <header className="px-6 pt-10 pb-8 grid grid-cols-3 items-center">
-        <div className="flex items-center">
-          <ThemeToggle />
+      <header className="px-6 pt-8 pb-6 sm:pt-10 sm:pb-8">
+        {/* Mobile layout */}
+        <div className="flex flex-col items-center gap-5 sm:hidden">
+          <h1 className="text-3xl italic leading-none text-zinc-800 dark:text-[#E4DFDA]" style={{ fontFamily: 'var(--font-playfair), serif' }}>
+            Unfinished Past
+          </h1>
+          <div className="flex items-center justify-between w-full">
+            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <button onClick={showRandom} className={btnClass}>Random</button>
+              <button
+                onClick={() => { setShowSaved((s) => !s); setSelectedIndex(null); setHistory([]); setFuture([]); }}
+                className={showSaved
+                  ? 'border border-red-500 bg-red-500 text-white text-[10px] tracking-[0.2em] uppercase px-3 py-1.5 font-medium transition-all hover:bg-red-600 hover:border-red-600'
+                  : btnClass}
+              >
+                {showSaved ? `♥ Saved${savedIds.size > 0 ? ` (${savedIds.size})` : ''}` : `♡ Saved${savedIds.size > 0 ? ` (${savedIds.size})` : ''}`}
+              </button>
+            </div>
+          </div>
         </div>
 
-        <h1 className="text-4xl italic leading-none text-zinc-800 dark:text-[#E4DFDA] text-center" style={{ fontFamily: 'var(--font-playfair), serif' }}>
-          Unfinished Past
-        </h1>
-
-        <div className="flex items-center gap-2 justify-end">
-          <button onClick={showRandom} className={btnClass}>
-            Random
-          </button>
-          <button
-            onClick={() => { setShowSaved((s) => !s); setSelectedIndex(null); setHistory([]); setFuture([]); }}
-            className={showSaved
-              ? 'border border-red-500 bg-red-500 text-white text-[10px] tracking-[0.2em] uppercase px-3 py-1.5 font-medium transition-all hover:bg-red-600 hover:border-red-600'
-              : btnClass}
-          >
-            {showSaved ? `♥ Saved${savedIds.size > 0 ? ` (${savedIds.size})` : ''}` : `♡ Saved${savedIds.size > 0 ? ` (${savedIds.size})` : ''}`}
-          </button>
+        {/* Desktop layout */}
+        <div className="hidden sm:grid sm:grid-cols-3 sm:items-center">
+          <div className="flex items-center">
+            <ThemeToggle />
+          </div>
+          <h1 className="text-4xl italic leading-none text-zinc-800 dark:text-[#E4DFDA] text-center" style={{ fontFamily: 'var(--font-playfair), serif' }}>
+            Unfinished Past
+          </h1>
+          <div className="flex items-center gap-2 justify-end">
+            <button onClick={showRandom} className={btnClass}>Random</button>
+            <button
+              onClick={() => { setShowSaved((s) => !s); setSelectedIndex(null); setHistory([]); setFuture([]); }}
+              className={showSaved
+                ? 'border border-red-500 bg-red-500 text-white text-[10px] tracking-[0.2em] uppercase px-3 py-1.5 font-medium transition-all hover:bg-red-600 hover:border-red-600'
+                : btnClass}
+            >
+              {showSaved ? `♥ Saved${savedIds.size > 0 ? ` (${savedIds.size})` : ''}` : `♡ Saved${savedIds.size > 0 ? ` (${savedIds.size})` : ''}`}
+            </button>
+          </div>
         </div>
       </header>
 
