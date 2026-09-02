@@ -145,7 +145,9 @@ export default function GalleryPage() {
       )}
 
       <header className="px-6 pt-10 pb-8 grid grid-cols-3 items-center">
-        <ThemeToggle />
+        <div className="flex items-center">
+          <ThemeToggle />
+        </div>
 
         <h1 className="text-4xl italic leading-none text-zinc-800 dark:text-[#E4DFDA] text-center" style={{ fontFamily: 'var(--font-playfair), serif' }}>
           Unfinished Past
