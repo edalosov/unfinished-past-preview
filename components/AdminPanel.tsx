@@ -307,6 +307,10 @@ export default function AdminPanel() {
     });
 
     if (res.ok) {
+      // Clean up orphaned reservation if one exists
+      if (reservations[artwork.url]) {
+        await saveReservation(artwork.url, null);
+      }
       setArtworks((prev) => prev.filter((a) => a.id !== artwork.id));
       setSelectedIds((prev) => { const next = new Set(prev); next.delete(artwork.id); return next; });
       await loadStorage();
@@ -398,6 +402,7 @@ export default function AdminPanel() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: artwork.url, thumbnailUrl: artwork.thumbnailUrl }),
       });
+      if (reservations[artwork.url]) await saveReservation(artwork.url, null);
     }
     setIsDeleting(false);
     setSelectedIds(new Set());
@@ -415,6 +420,7 @@ export default function AdminPanel() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: artwork.url, thumbnailUrl: artwork.thumbnailUrl }),
       });
+      if (reservations[artwork.url]) await saveReservation(artwork.url, null);
     }
     setIsDeleting(false);
     setSelectedIds(new Set());
@@ -648,9 +654,9 @@ export default function AdminPanel() {
         <div className="flex items-center justify-between flex-wrap gap-3">
           <h2 className="text-xs tracking-[0.3em] uppercase text-zinc-500 flex items-center gap-3">
             <span>Gallery{!loading && ` — ${artworks.length} ${artworks.length === 1 ? 'work' : 'works'}`}</span>
-            {!loading && Object.keys(reservations).length > 0 && (
+            {!loading && artworks.filter(a => reservations[a.url]).length > 0 && (
               <span className="text-amber-600 dark:text-amber-400">
-                {Object.keys(reservations).length} reserved
+                {artworks.filter(a => reservations[a.url]).length} reserved
               </span>
             )}
           </h2>
